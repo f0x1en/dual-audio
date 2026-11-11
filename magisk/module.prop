@@ -1,6 +1,6 @@
 id=snapparty
-name=Snap Party
-version=0.3
-versionCode=3
+name=Snapcast Host
+version=0.4
+versionCode=4
 author=dual-audio
-description=Synced audio host for Snapcast. Starts snapserver at boot and announces it on the network. Action toggles party mode.
+description=Synced audio host for Snapcast. Starts snapserver at boot and announces it on the network. Action toggles capture of all app audio.

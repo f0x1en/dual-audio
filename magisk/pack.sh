@@ -3,6 +3,6 @@
 set -e
 cd "$(dirname "$0")"
 adb shell su -c cat /data/data/com.termux/files/home/snapcap/snapcap.jar > snapcap.jar
-rm -f ../snapparty.zip
-zip -qr ../snapparty.zip module.prop common.sh service.sh action.sh snapcap.jar META-INF
-echo "built: $(cd .. && pwd)/snapparty.zip"
+rm -f ../snapcast-host.zip
+zip -qr ../snapcast-host.zip module.prop common.sh service.sh action.sh snapcap.jar META-INF
+echo "built: $(cd .. && pwd)/snapcast-host.zip"

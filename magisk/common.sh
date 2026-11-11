@@ -2,7 +2,7 @@
 # Shared helpers for service.sh and action.sh. Source with: . $MODDIR/common.sh
 T=/data/data/com.termux/files
 JAR=/data/local/tmp/snapcap.jar
-LOG=/data/local/tmp/snapparty.log
+LOG=/data/local/tmp/snapcast-host.log
 
 pids() {
   ps -A -o pid,args | grep -E "$1" | grep -v grep | awk '{print $1}'
