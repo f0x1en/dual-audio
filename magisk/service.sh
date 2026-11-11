@@ -11,3 +11,4 @@ until [ -x $T/usr/bin/snapserver ]; do sleep 5; done
 echo "$(date) boot: starting snapserver and announcement" > $LOG
 server_running || server_start
 advertise_running || advertise_start
+publish_apk

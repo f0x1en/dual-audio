@@ -43,6 +43,22 @@ advertise_start() {
   setsid su 2000 -c "CLASSPATH=$JAR app_process / SnapCap advertise 1704" > /data/local/tmp/snapadvertise.log 2>&1 < /dev/null &
 }
 
+# Serve the installed Snapcast app at http://<host-ip>:1780/snapcast.apk,
+# so friends on the same network can install it from their browser.
+publish_apk() {
+  local apks www uid
+  www=$T/usr/share/snapserver/snapweb
+  apks=$(pm path de.badaix.snapcast | sed 's/^package://')
+  if [ "$(echo "$apks" | wc -l)" != 1 ]; then
+    echo "$(date) Snapcast is a split APK, not published" >> $LOG
+    return 1
+  fi
+  uid=$(stat -c %u $T)
+  cp "$apks" $www/snapcast.apk
+  chown $uid:$uid $www/snapcast.apk
+  chcon $(ls -Zd $www | awk '{print $1}') $www/snapcast.apk
+}
+
 # IPs friends can use: Wi-Fi and hotspot interfaces only
 share_ips() {
   ip -4 -o addr | awk '$2 ~ /^(wlan|swlan|ap|softap)/ {split($4, a, "/"); print a[1] " (" $2 ")"}'
