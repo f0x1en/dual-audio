@@ -32,6 +32,11 @@ if [ -z "$SNAPCAST_UID" ]; then
   exit 1
 fi
 
+# Termux is usually an idle background app: Android then blocks its network,
+# and clients cannot reach snapserver. Exempt it from battery optimization.
+cmd deviceidle whitelist +com.termux > /dev/null
+am set-inactive com.termux false
+
 as_termux "setsid snapserver > $T/home/snapserver.log 2>&1 < /dev/null &"
 for i in 1 2 3 4 5; do [ -p $T/usr/tmp/snapfifo ] && break; sleep 1; done
 # files made from here carry the wrong SELinux label for the Termux app
