@@ -43,20 +43,28 @@ advertise_start() {
   setsid su 2000 -c "CLASSPATH=$JAR app_process / SnapCap advertise 1704" > /data/local/tmp/snapadvertise.log 2>&1 < /dev/null &
 }
 
-# Serve the installed Snapcast app at http://<host-ip>:1780/snapcast.apk,
+APK_DIR=$T/home/apk
+APK_PORT=1781
+
+# Serve the installed Snapcast app at http://<host-ip>:1781/snapcast.apk,
 # so friends on the same network can install it from their browser.
+# darkhttpd, not snapserver: snapserver sends .apk as application/text,
+# which browsers save as a broken text file.
 publish_apk() {
-  local apks www uid
-  www=$T/usr/share/snapserver/snapweb
+  local apks uid
+  [ -n "$(pids 'darkhttpd')" ] && return 0
+  [ -x $T/usr/bin/darkhttpd ] || { echo "$(date) darkhttpd missing, APK not served" >> $LOG; return 1; }
   apks=$(pm path de.badaix.snapcast | sed 's/^package://')
   if [ "$(echo "$apks" | wc -l)" != 1 ]; then
-    echo "$(date) Snapcast is a split APK, not published" >> $LOG
+    echo "$(date) Snapcast is a split APK, not served" >> $LOG
     return 1
   fi
   uid=$(stat -c %u $T)
-  cp "$apks" $www/snapcast.apk
-  chown $uid:$uid $www/snapcast.apk
-  chcon $(ls -Zd $www | awk '{print $1}') $www/snapcast.apk
+  mkdir -p $APK_DIR
+  cp "$apks" $APK_DIR/snapcast.apk
+  chown -R $uid:$uid $APK_DIR
+  chcon -R $(ls -Zd $T/home | awk '{print $1}') $APK_DIR
+  su $uid -g $uid -G 3003 -c "$T/usr/bin/darkhttpd $APK_DIR --port $APK_PORT --default-mimetype application/vnd.android.package-archive --daemon" > /dev/null 2>&1
 }
 
 # IPs friends can use: Wi-Fi and hotspot interfaces only

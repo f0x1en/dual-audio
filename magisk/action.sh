@@ -16,7 +16,7 @@ if [ ! -x $T/usr/bin/snapserver ]; then
 fi
 server_running || server_start
 advertise_running || advertise_start
-[ -f $T/usr/share/snapserver/snapweb/snapcast.apk ] || publish_apk
+publish_apk
 capture_start
 sleep 2
 if ! capture_running; then
@@ -30,8 +30,8 @@ echo "Open Snapcast on every phone. New phones find this host by themselves."
 echo "A phone that used another network before: open its server settings,"
 echo "wait for the address to fill in, tap OK. Or type:"
 share_ips | sed 's/^/  /'
-if [ -f $T/usr/share/snapserver/snapweb/snapcast.apk ]; then
+if [ -n "$(pids 'darkhttpd')" ]; then
   echo
   echo "Friends without the Snapcast app: open in the browser"
-  share_ips | awk '{print "  http://" $1 ":1780/snapcast.apk"}'
+  share_ips | awk -v port=$APK_PORT '{print "  http://" $1 ":" port "/snapcast.apk"}'
 fi

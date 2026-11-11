@@ -17,7 +17,7 @@ One rooted Android phone is the host. It captures the audio of any app (Spotify,
 
 **Host phone**
 - Android 13 or newer, rooted with Magisk
-- [Termux](https://f-droid.org/packages/com.termux/) with `snapcast-server`
+- [Termux](https://f-droid.org/packages/com.termux/) with `snapcast-server` and `darkhttpd`
 - [Snapcast](https://github.com/badaix/snapdroid) app (`de.badaix.snapcast`)
 
 **Other phones**
@@ -32,7 +32,7 @@ SnapCap is built on the host phone, against the phone's own framework, so no And
 
 1. In Termux on the host:
    ```sh
-   pkg install snapcast-server openjdk-21 d8 dex2jar
+   pkg install snapcast-server darkhttpd openjdk-21 d8 dex2jar
    ```
 2. Copy the `snapcap/` folder to `~/snapcap` in Termux, then run:
    ```sh
@@ -53,7 +53,7 @@ SnapCap is built on the host phone, against the phone's own framework, so no And
 3. Open Snapcast on the host and on every other phone, then press play.
    - A phone that never connected before finds the host by itself.
    - A phone that connected on another network before: open its server settings, wait for the address to fill in, tap OK.
-   - A phone without the Snapcast app: open `http://<host-ip>:1780/snapcast.apk` in its browser and install it. The host serves its own installed copy. The Action output shows the full link.
+   - A phone without the Snapcast app: open `http://<host-ip>:1781/snapcast.apk` in its browser and install it. The host serves its own installed copy with darkhttpd. The Action output shows the full link.
 4. Play music in any app on the host.
 5. Tap **Action** again to turn capture off. The host then plays audio normally.
 
