@@ -1,6 +1,6 @@
 id=snapparty
 name=Snap Party
-version=0.2
-versionCode=2
+version=0.3
+versionCode=3
 author=dual-audio
-description=Synced audio host for Snapcast. Starts at boot; party mode turns on by itself when the Snapcast app on this phone connects. Action shows status and the IP for friends.
+description=Synced audio host for Snapcast. Starts snapserver at boot and announces it on the network. Action toggles party mode.

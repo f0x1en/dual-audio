@@ -21,6 +21,8 @@ import android.media.AudioAttributes;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioRecord;
+import android.net.nsd.NsdManager;
+import android.net.nsd.NsdServiceInfo;
 import android.os.Looper;
 import android.os.Process;
 
@@ -154,7 +156,55 @@ public final class SnapCap {
         return (AudioRecord) policyClass.getMethod("createAudioRecordSink", mixClass).invoke(policy, mix);
     }
 
+    // Announce snapserver on the network (mDNS "_snapcast._tcp"), so Snapcast
+    // apps find the host on Wi-Fi or hotspot without typing an IP.
+    // Snapdroid only accepts service names starting with "Snapcast".
+    private static void advertise(Context context, int port) throws Exception {
+        // Not getSystemService(): that passes package "android", which NsdService
+        // rejects for uid 2000. Build NsdManager with our com.android.shell context.
+        Object binder = Class.forName("android.os.ServiceManager")
+                .getMethod("getService", String.class).invoke(null, Context.NSD_SERVICE);
+        Class<?> iNsdClass = Class.forName("android.net.nsd.INsdManager");
+        Object iNsd = Class.forName("android.net.nsd.INsdManager$Stub")
+                .getMethod("asInterface", Class.forName("android.os.IBinder")).invoke(null, binder);
+        Constructor<NsdManager> nsdCtor = NsdManager.class.getDeclaredConstructor(Context.class, iNsdClass);
+        nsdCtor.setAccessible(true);
+        NsdManager nsd = nsdCtor.newInstance(context, iNsd);
+        NsdServiceInfo info = new NsdServiceInfo();
+        info.setServiceName("Snapcast");
+        info.setServiceType("_snapcast._tcp");
+        info.setPort(port);
+        nsd.registerService(info, NsdManager.PROTOCOL_DNS_SD, new NsdManager.RegistrationListener() {
+            @Override
+            public void onServiceRegistered(NsdServiceInfo i) {
+                System.err.println("snapcap: advertising " + i.getServiceName() + " on port " + port);
+            }
+
+            @Override
+            public void onRegistrationFailed(NsdServiceInfo i, int error) {
+                System.err.println("snapcap: advertise failed, error " + error);
+                System.exit(1);
+            }
+
+            @Override
+            public void onServiceUnregistered(NsdServiceInfo i) {
+            }
+
+            @Override
+            public void onUnregistrationFailed(NsdServiceInfo i, int error) {
+            }
+        });
+        Looper.loop();
+    }
+
+    // Usage: SnapCap <excludeUid>...   capture to stdout
+    //        SnapCap advertise <port>  announce snapserver via mDNS
     public static void main(String[] args) throws Exception {
+        if (args.length == 2 && args[0].equals("advertise")) {
+            Looper.prepareMainLooper();
+            advertise(setUpContext(), Integer.parseInt(args[1]));
+            return;
+        }
         int[] excludeUids = new int[args.length];
         for (int i = 0; i < args.length; i++) {
             excludeUids[i] = Integer.parseInt(args[i]);

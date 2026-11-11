@@ -5,8 +5,10 @@
 set -e
 cd "$(dirname "$0")"
 [ -f fw-classes.jar ] || d2j-dex2jar -f -o fw-classes.jar /system/framework/framework.jar
+# Android 13+: NsdManager lives in the connectivity mainline module
+[ -f fwc-classes.jar ] || d2j-dex2jar -f -o fwc-classes.jar /apex/com.android.tethering/javalib/framework-connectivity-t.jar
 rm -rf classes stub-classes && mkdir classes stub-classes
 javac --release 11 -d stub-classes stubs/android/os/Parcelable.java
-javac --release 11 -cp stub-classes:fw-classes.jar -d classes SnapCap.java
-d8 --min-api 33 --classpath fw-classes.jar --output snapcap.jar classes/*.class
+javac --release 11 -cp stub-classes:fw-classes.jar:fwc-classes.jar -d classes SnapCap.java
+d8 --min-api 33 --classpath fw-classes.jar --classpath fwc-classes.jar --output snapcap.jar classes/*.class
 echo "built: $(pwd)/snapcap.jar"

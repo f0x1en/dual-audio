@@ -9,7 +9,8 @@ pids() {
 }
 
 server_running() { [ -n "$(pids 'usr/bin/snapserver')" ]; }
-capture_running() { [ -n "$(pids 'app_process / SnapCap')" ]; }
+capture_running() { [ -n "$(pids 'app_process / SnapCap [0-9]')" ]; }
+advertise_running() { [ -n "$(pids 'app_process / SnapCap advertise')" ]; }
 
 server_start() {
   local uid label
@@ -28,28 +29,21 @@ capture_start() {
   local uid snapcast_uid
   uid=$(stat -c %u $T)
   snapcast_uid=$(stat -c %u /data/data/de.badaix.snapcast)
-  cp $MODDIR/snapcap.jar $JAR && chmod 644 $JAR
   setsid sh -c "su 2000 -c 'CLASSPATH=$JAR app_process / SnapCap $snapcast_uid' 2> /data/local/tmp/snapcap.log \
     | su $uid -g $uid -c 'cat > $T/usr/tmp/snapfifo'" < /dev/null > /dev/null 2>&1 &
 }
 
 capture_stop() {
-  kill $(pids 'app_process / SnapCap|cat > .*usr/tmp/snapfifo') 2>/dev/null
+  kill $(pids 'app_process / SnapCap [0-9]|cat > .*usr/tmp/snapfifo') 2>/dev/null
+}
+
+# Announce the server via mDNS so Snapcast apps find it without an IP
+advertise_start() {
+  cp $MODDIR/snapcap.jar $JAR && chmod 644 $JAR
+  setsid su 2000 -c "CLASSPATH=$JAR app_process / SnapCap advertise 1704" > /data/local/tmp/snapadvertise.log 2>&1 < /dev/null &
 }
 
 # IPs friends can use: Wi-Fi and hotspot interfaces only
 share_ips() {
   ip -4 -o addr | awk '$2 ~ /^(wlan|swlan|ap|softap)/ {split($4, a, "/"); print a[1] " (" $2 ")"}'
-}
-
-# True when the Snapcast app on this phone is connected to the local server
-host_client_connected() {
-  local peers ip
-  peers=$(ss -tn state established '( sport = :1704 )' 2>/dev/null | tail -n +2 | awk '{print $NF}')
-  [ -z "$peers" ] && return 1
-  for ip in 127.0.0.1 $(ip -4 -o addr | awk '{split($4, a, "/"); print a[1]}'); do
-    echo "$peers" | grep -qF "$ip]:" && return 0
-    echo "$peers" | grep -qE "^$ip:" && return 0
-  done
-  return 1
 }
